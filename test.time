@@ -1,0 +1,26 @@
+package main
+
+import (
+	"fmt"
+	"time"
+)
+
+func main() {
+	fmt.Println("Time!")
+	s := "20060102150405.000"
+	fake := "20160407134101.001"
+	t := time.Now().UTC()
+	t, _ = time.Parse(s, t.Format(s))
+	//	fmt.Println(time.Parse(s, t.Format(s)))
+	fmt.Println("Time right now is:", t)
+
+	parsed, err := time.Parse(s, fake)
+	parsed.Format(s)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("Fake time is:", parsed)
+	fmt.Println(parsed.Format(s))
+
+}
