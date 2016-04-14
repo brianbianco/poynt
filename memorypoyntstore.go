@@ -26,11 +26,24 @@ func (s *MemoryPoyntStore) Write(key string, p Poynt) bool {
 }
 
 func (s *MemoryPoyntStore) Filter(key string, f map[string][]string) []Poynt {
-	if v, ok := s.store[key]; ok {
-		return mapToArray(v)
-	} else {
+	var pa []Poynt
+	if _, ok := s.store[key]; !ok {
 		return []Poynt{}
 	}
+	for _, p := range s.store[key] {
+		matches := true
+		for param, value := range f {
+			t, _ := StringToTime(value[0])
+			matches, _ = p.Compare(param, t)
+			if !matches {
+				break
+			}
+		}
+		if matches {
+			pa = append(pa, p)
+		}
+	}
+	return pa
 }
 
 func mapToArray(m map[string]Poynt) []Poynt {
