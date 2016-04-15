@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"sort"
 )
 
 type MemoryPoyntStore struct {
@@ -43,6 +44,16 @@ func (s *MemoryPoyntStore) Filter(key string, f map[string][]string) []Poynt {
 			pa = append(pa, p)
 		}
 	}
+
+	// Our two sorting functions we want to order by
+	logt := func(p1 *Poynt, p2 *Poynt) bool {
+		return p1.Log_lt(p2.Logt)
+	}
+	obst := func(p1 *Poynt, p2 *Poynt) bool {
+		return p1.Obs_lt(p2.Obst)
+	}
+
+	OrderedBy(logt, obst).Sort(pa)
 	return pa
 }
 
@@ -61,4 +72,55 @@ func uniqueId(p Poynt) string {
 	h := sha1.New()
 	h.Write([]byte(jp.Opt + jp.Logt + jp.Obst))
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+/* Lets make poynts sortable
+
+logt := func(p1 *Poynt, p2 *Poynt) bool {
+        return p1.Log_lt(p2.Log)
+}
+*/
+
+//type By func(p1 *Poynt, p2 *Poynt) bool
+type lessFunc func(p1 *Poynt, p2 *Poynt) bool
+
+func OrderedBy(less ...lessFunc) *poyntSorter {
+	return &poyntSorter{
+		less: less,
+	}
+}
+
+func (ps *poyntSorter) Sort(poynts []Poynt) {
+	ps.poynts = poynts
+	sort.Sort(ps)
+}
+
+type poyntSorter struct {
+	poynts []Poynt
+	less   []lessFunc
+}
+
+func (ps *poyntSorter) Len() int {
+	return len(ps.poynts)
+}
+
+func (ps *poyntSorter) Swap(i int, j int) {
+	ps.poynts[i], ps.poynts[j] = ps.poynts[j], ps.poynts[i]
+}
+
+func (ps *poyntSorter) Less(i int, j int) bool {
+	p1, p2 := &ps.poynts[i], &ps.poynts[j]
+	var k int
+	for k = 0; k < len(ps.less)-1; k++ {
+		less := ps.less[k]
+		switch {
+		case less(p1, p2):
+			return true
+		case less(p2, p1):
+			return false
+		}
+	}
+	// all other comparisons claim they are equal so lets go ahead and
+	// return the results of the final one
+	return ps.less[k](p1, p2)
 }
