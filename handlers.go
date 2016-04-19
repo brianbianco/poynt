@@ -56,11 +56,18 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 
-	if _, ok := r.URL.Query()["t_log"]; ok {
+	var data []JsonPoynt
+	keyspace := poynts.Get(vars["key"])
+
+	// Call a filter for each parameter
+	// This will have to be changed to handle more than just
+	// the list of comparison methods implemented by the poynt struct
+	for param, value := range r.URL.Query() {
+		keyspace.Filter(param, value[0])
 	}
 
-	var data []JsonPoynt
-	for _, v := range poynts.Filter(vars["key"], r.URL.Query()) {
+	// Get the results and convert to Json
+	for _, v := range keyspace.Apply() {
 		data = append(data, v.ToJson())
 	}
 	fmt.Println("Trying to marshal", data)
