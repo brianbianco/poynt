@@ -25,14 +25,25 @@ func (pc *PoyntCollection) Filter(name string, value string) shaper {
 }
 
 func (pc *PoyntCollection) Sort(f []lessFunc) shaper {
-	/*
-		funcs := []lessFunc{DscObst, AscOpt}
-		OrderedBy(funcs...).Sort(pa)
-	*/
+	shaper := func() shaper {
+		OrderedBy(f...).Sort(pc.store)
+		return pc
+	}
+	pc.shapers = append(pc.shapers, shaper)
 	return pc
 }
 
 func (pc *PoyntCollection) Limit(l int) shaper {
+	shaper := func() shaper {
+		if l > len(pc.store) {
+			l = len(pc.store)
+		}
+		tmp := make([]Poynt, l, l)
+		copy(tmp, pc.store)
+		pc.store = tmp
+		return pc
+	}
+	pc.shapers = append(pc.shapers, shaper)
 	return pc
 }
 

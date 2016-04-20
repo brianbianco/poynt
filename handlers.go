@@ -7,7 +7,35 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"regexp"
+	"strconv"
 )
+
+//Maps x,x,x where O is the order to Logical, Observational, Operational
+//where x is a or d for Ascending and Descending order
+var SortMap = [3]map[string]lessFunc{
+	map[string]lessFunc{"a": AscLogt, "d": DscLogt},
+	map[string]lessFunc{"a": AscObst, "d": DscObst},
+	map[string]lessFunc{"a": AscOpt, "d": DscOpt},
+}
+
+func SortMapper(position int, ordering string) lessFunc {
+	return SortMap[position][ordering]
+}
+
+func SortParser(input string) []string {
+	max := 3
+	results := make([]string, 0, max)
+	myExp := regexp.MustCompile(`([d|a])(\d*)(?:,{0,1})`)
+	match := myExp.FindAllStringSubmatch(input, -1)
+	for i := 0; i < max; i++ {
+		//first field is the fully matched string, ignore it.
+		//second field is a or d
+		results = append(results, match[i][1])
+		//third field is a number, currently not used
+	}
+	return results
+}
 
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Home Handler...")
@@ -63,7 +91,20 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	// This will have to be changed to handle more than just
 	// the list of comparison methods implemented by the poynt struct
 	for param, value := range r.URL.Query() {
-		keyspace.Filter(param, value[0])
+		switch param {
+		case "sort_by":
+			parsed := SortParser(value[0])
+			sorts := make([]lessFunc, 0, len(parsed))
+			for i, v := range parsed {
+				sorts = append(sorts, SortMapper(i, v))
+			}
+			keyspace.Sort(sorts)
+		case "limit":
+			lim, _ := strconv.Atoi(value[0])
+			keyspace.Limit(lim)
+		default:
+			keyspace.Filter(param, value[0])
+		}
 	}
 
 	// Get the results and convert to Json
