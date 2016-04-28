@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 //Maps x,x,x where O is the order to Logical, Observational, Operational
@@ -87,9 +89,6 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	var data []JsonPoynt
 	keyspace := poynts.Get(vars["key"])
 
-	// Call a filter for each parameter
-	// This will have to be changed to handle more than just
-	// the list of comparison methods implemented by the poynt struct
 	for param, value := range r.URL.Query() {
 		switch param {
 		case "sort_by":
@@ -102,8 +101,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		case "limit":
 			lim, _ := strconv.Atoi(value[0])
 			keyspace.Limit(lim)
+		// Assume the param is a supported filter
 		default:
-			keyspace.Filter(param, value[0])
+			s, _ := CheckAndPadDate(value[0])
+			keyspace.Filter(param, s)
 		}
 	}
 
@@ -118,4 +119,40 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(j)
 	return
+}
+
+// Validates that passed in string conforms to date/time format
+// YYYYmmddHHMMSS.mmm
+// Will pad out with Zeros anything after YYYYmmdd
+func CheckAndPadDate(s string) (string, error) {
+	size := len(s)
+	min := 8 // YYYYmmddd
+	var err error
+
+	switch {
+	case size < min:
+		err = errors.New("Parameter doens't meet min size requirement")
+	case size > TimeFormatMaxLength:
+		err = errors.New("Parameter exceeds max size")
+	case size >= min && size < TimeFormatMaxLength:
+		return PadOut(s), err
+	}
+	return s, err
+}
+
+// takes a string of format 20160320183001.001
+// Pads out anything over minimum with 0's
+func PadOut(s string) string {
+	s = strings.Replace(s, ".", "", -1)
+	size := len(s)
+	// Reduce size by one because period was stripped out
+	padding := TimeFormatMaxLength - size - 1
+	if padding > 0 {
+		fixed := s + strings.Repeat("0", padding)
+		size = len(fixed)
+		fixed = fixed[0:size-3] + "." + fixed[size-3:size]
+		return fixed
+	} else {
+		return s
+	}
 }
