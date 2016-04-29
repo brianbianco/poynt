@@ -83,10 +83,10 @@ func PostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Running get handler")
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 
-	var data []JsonPoynt
 	keyspace := poynts.Get(vars["key"])
 
 	for param, value := range r.URL.Query() {
@@ -108,6 +108,7 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var data []JsonPoynt
 	// Get the results and convert to Json
 	for _, v := range keyspace.Apply() {
 		data = append(data, v.ToJson())
@@ -118,6 +119,39 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 	w.Write(j)
+	return
+}
+
+func PoyntHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Running Poynt Handler")
+
+	w.Header().Set("Content-Type", "application/json")
+	vars := mux.Vars(r)
+	fmt.Println(vars)
+
+	//	var data []JsonPoynt
+	keyspace := poynts.Get(vars["key"])
+	p := []string{"log", "obs", "op"}
+
+	for _, k := range p {
+		if _, ok := vars[k]; ok {
+			keyspace.Filter(k, vars[k])
+		}
+	}
+
+	var data []JsonPoynt
+	// Get the results and convert to Json
+
+	for _, v := range keyspace.Apply() {
+		data = append(data, v.ToJson())
+	}
+	fmt.Println("Trying to marshal", data)
+	j, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(j)
+
 	return
 }
 
