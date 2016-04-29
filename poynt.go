@@ -114,3 +114,18 @@ func (p *Poynt) Op_gt(t time.Time) bool {
 func (p *Poynt) Op_ge(t time.Time) bool {
 	return p.Opt.Unix() >= t.Unix()
 }
+
+func (p *Poynt) SelectCols(cols []string) map[string]interface{} {
+	s := map[string]interface{}{}
+	reduced := map[string]interface{}{}
+	err := json.Unmarshal([]byte(p.Data), &s)
+	if err != nil {
+		panic(err)
+	}
+	for _, k := range cols {
+		if _, ok := s[k]; ok {
+			reduced[k] = s[k]
+		}
+	}
+	return reduced
+}

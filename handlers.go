@@ -89,6 +89,9 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 
 	keyspace := poynts.Get(vars["key"])
 
+	//Right now no forced ordering of shaping functions
+	//This should be changed
+	//Filter should always occur before sort and limit
 	for param, value := range r.URL.Query() {
 		switch param {
 		case "sort_by":
@@ -101,7 +104,10 @@ func GetHandler(w http.ResponseWriter, r *http.Request) {
 		case "limit":
 			lim, _ := strconv.Atoi(value[0])
 			keyspace.Limit(lim)
-		// Assume the param is a supported filter
+			// Assume the param is a supported filter
+		case "col":
+			cols := strings.Split(value[0], ",")
+			keyspace.Select(cols)
 		default:
 			s, _ := CheckAndPadDate(value[0])
 			keyspace.Filter(param, s)

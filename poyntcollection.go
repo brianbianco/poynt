@@ -1,5 +1,9 @@
 package main
 
+import (
+	"encoding/json"
+)
+
 type shaperFunc func() shaper
 
 type PoyntCollection struct {
@@ -33,6 +37,19 @@ func (pc *PoyntCollection) Sort(f []lessFunc) shaper {
 	return pc
 }
 
+func (pc *PoyntCollection) Select(cols []string) shaper {
+	shaper := func() shaper {
+		for k, p := range pc.store {
+			selection := p.SelectCols(cols)
+			reduced, _ := json.Marshal(selection)
+			p.Data = (json.RawMessage)(reduced)
+			pc.store[k] = p
+		}
+		return pc
+	}
+	pc.shapers = append(pc.shapers, shaper)
+	return pc
+}
 func (pc *PoyntCollection) Limit(l int) shaper {
 	shaper := func() shaper {
 		if l > len(pc.store) {
