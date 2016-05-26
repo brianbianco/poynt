@@ -6,11 +6,12 @@ import (
 	"net/http"
 )
 
-var poynts MemoryPoyntStore
+var poynts PoyntStore
 
 func main() {
 	fmt.Println("Poynt service")
-	poynts.store = make(map[string]map[string]Poynt)
+	//	poynts = NewMemoryPoyntStore()
+	poynts = NewS3PoyntStore("cargometrics-infra", "poynts_test", "us-west-2")
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/{apiVersion}/poynt/{key}", PostHandler).Methods("POST")

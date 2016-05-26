@@ -18,6 +18,14 @@ type S3PoyntStore struct {
 	Region string
 }
 
+func NewS3PoyntStore(b string, p string, r string) *S3PoyntStore {
+	return &S3PoyntStore{
+		Bucket: b,
+		Pre:    p,
+		Region: r,
+	}
+}
+
 func (s *S3PoyntStore) Get(key string) shaper {
 	var pc PoyntCollection
 	keys := s.keysFromKeyspace(key)
@@ -76,7 +84,9 @@ func (s *S3PoyntStore) KeysToPoynts(key string, keys []string) []Poynt {
 			times = append(times, converted)
 		}
 		poyntData := s.DataForKey(v)
-		p := Poynt{Logt: times[0],
+		p := Poynt{
+			Name: key,
+			Logt: times[0],
 			Obst: times[1],
 			Opt:  times[2],
 			Data: poyntData}
@@ -95,6 +105,7 @@ func (s *S3PoyntStore) Keyspace(key string) string {
 
 func (s *S3PoyntStore) keysFromKeyspace(key string) []string {
 	keyspace := s.Keyspace(key)
+	fmt.Println("Pulling keys for keyspace:", keyspace)
 	var keys []string
 
 	svc := s3.New(session.New(), &aws.Config{Region: aws.String(s.Region)})

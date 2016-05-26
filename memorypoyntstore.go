@@ -10,6 +10,12 @@ type MemoryPoyntStore struct {
 	store map[string]map[string]Poynt
 }
 
+func NewMemoryPoyntStore() *MemoryPoyntStore {
+	return &MemoryPoyntStore{
+		store: make(map[string]map[string]Poynt),
+	}
+}
+
 func (s *MemoryPoyntStore) Get(key string) shaper {
 	var pc PoyntCollection
 	if _, ok := s.store[key]; !ok {
