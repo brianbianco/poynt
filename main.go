@@ -11,7 +11,7 @@ var poynts PoyntStore
 func main() {
 	fmt.Println("Poynt service")
 	poynts = NewMemoryPoyntStore()
-	//poynts = NewS3PoyntStore("cargometrics-infra", "poynts_test", "us-west-2")
+	//poynts = NewS3PoyntStore("somebucket", "poynts_test", "us-west-2")
 	r := mux.NewRouter()
 	r.HandleFunc("/", HomeHandler)
 	r.HandleFunc("/{apiVersion}/poynt/keys", ListKeysHandler)
