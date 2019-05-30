@@ -132,3 +132,15 @@ func PoyntHandler(w http.ResponseWriter, r *http.Request) {
 
 	return
 }
+
+func ListKeysHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Running ListKeys handler")
+	w.Header().Set("Content-Type", "application/json")
+	keys := poynts.List()
+	j, err := json.Marshal(keys)
+	if err != nil {
+		fmt.Println(err)
+	}
+	w.Write(j)
+	return
+}

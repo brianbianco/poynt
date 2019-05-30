@@ -103,6 +103,26 @@ func (s *S3PoyntStore) Keyspace(key string) string {
 	}
 }
 
+func (s *S3PoyntStore) List() []string {
+	var keys []string
+
+	svc := s3.New(session.New(), &aws.Config{Region: aws.String(s.Region)})
+	var next *string
+	for {
+		params := &s3.ListObjectsInput{Bucket: aws.String(s.Bucket), Marker: next, Prefix: aws.String(s.Pre + "/"), Delimiter: aws.String("/")}
+		resp, _ := svc.ListObjects(params)
+		for _, obj := range resp.CommonPrefixes {
+			keys = append(keys, *obj.Prefix)
+		}
+		if *resp.IsTruncated {
+			next = resp.Contents[len(resp.Contents)-1].Key
+		} else {
+			break
+		}
+	}
+	return keys
+}
+
 func (s *S3PoyntStore) keysFromKeyspace(key string) []string {
 	keyspace := s.Keyspace(key)
 	fmt.Println("Pulling keys for keyspace:", keyspace)

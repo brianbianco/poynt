@@ -4,10 +4,12 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"sync"
 )
 
 type MemoryPoyntStore struct {
 	store map[string]map[string]Poynt
+	sync.Mutex
 }
 
 func NewMemoryPoyntStore() *MemoryPoyntStore {
@@ -16,7 +18,17 @@ func NewMemoryPoyntStore() *MemoryPoyntStore {
 	}
 }
 
+func (s *MemoryPoyntStore) List() []string {
+	keys := []string{}
+	for k, _ := range s.store {
+		keys = append(keys, k)
+	}
+	return keys
+}
+
 func (s *MemoryPoyntStore) Get(key string) shaper {
+	s.Lock()
+	defer s.Unlock()
 	var pc PoyntCollection
 	if _, ok := s.store[key]; !ok {
 		return &pc
@@ -27,6 +39,9 @@ func (s *MemoryPoyntStore) Get(key string) shaper {
 }
 
 func (s *MemoryPoyntStore) Write(key string, p Poynt) bool {
+	s.Lock()
+	defer s.Unlock()
+
 	id := uniqueId(p)
 	if namespace, ok := s.store[key]; ok {
 		if _, ok := namespace[id]; ok {
